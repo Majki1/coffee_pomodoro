@@ -135,7 +135,7 @@ export function PomodoroTimer() {
       setIsActive(true);
       if (newMode === "rest") {
         setTimeRemaining(restDuration * 60);
-        fetchQuote();
+        // fetchQuote();
       } else {
         setTimeRemaining(workDuration * 60);
         setQuote(null);
@@ -194,11 +194,12 @@ export function PomodoroTimer() {
 
   return (
     <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm">
-      <CardHeader className="text-center relative">
-        <CardTitle className="font-headline text-3xl sm:text-4xl tracking-tight">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div className="w-1/4"></div>
+        <CardTitle className="w-1/2 text-center font-headline text-3xl sm:text-4xl tracking-tight">
           Coffee Time
         </CardTitle>
-        <div className="absolute top-4 right-4 flex items-center gap-2">
+        <div className="w-1/4 flex items-center justify-end gap-1">
             <ThemeToggle />
             <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
                 <DialogTrigger asChild>
@@ -317,3 +318,5 @@ export function PomodoroTimer() {
     </Card>
   );
 }
+
+    
