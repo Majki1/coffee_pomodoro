@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import * as Tone from "tone";
 import { format, formatDistanceToNow } from "date-fns";
 
-import { CoffeeCup } from "@/components/coffee-cup";
+import { CoffeeCup, type CupStyle } from "@/components/coffee-cup";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -47,6 +47,9 @@ import {
   Minus,
   Coffee,
   Star,
+  CupSoda,
+  GlassWater,
+  Gift
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "./theme-toggle";
@@ -57,6 +60,13 @@ type Session = {
   completedAt: Date;
   duration: number;
 };
+
+const UNLOCKABLES: { level: number; name: string; style: CupStyle, icon: React.ReactNode }[] = [
+    { level: 1, name: "Classic Mug", style: "mug", icon: <Coffee className="h-5 w-5" /> },
+    { level: 5, name: "Iced Coffee Glass", style: "glass", icon: <GlassWater className="h-5 w-5" /> },
+    { level: 10, name: "Takeaway Cup", style: "takeaway", icon: <CupSoda className="h-5 w-5" /> },
+    { level: 15, name: "Fancy Teacup", style: "fancy", icon: <Gift className="h-5 w-5" /> },
+];
 
 const formatTime = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
@@ -98,7 +108,13 @@ export function PomodoroTimer() {
       const savedXp = localStorage.getItem('pomodoro-xp');
       const savedLevel = localStorage.getItem('pomodoro-level');
       if (savedXp) setXp(parseInt(savedXp, 10));
-      if (savedLevel) setLevel(parseInt(savedLevel, 10));
+      if (savedLevel) {
+          const savedLevelNum = parseInt(savedLevel, 10);
+          setLevel(savedLevelNum);
+          setTotalXpForNextLevel(baseXpForNextLevel(savedLevelNum));
+      } else {
+          setTotalXpForNextLevel(baseXpForNextLevel(1));
+      }
 
     }
   }, []);
@@ -134,18 +150,33 @@ export function PomodoroTimer() {
     let newXp = xp + amount;
     let currentLevel = level;
     let xpNeeded = baseXpForNextLevel(currentLevel);
+    let leveledUp = false;
 
     while (newXp >= xpNeeded) {
         newXp -= xpNeeded;
         currentLevel += 1;
+        leveledUp = true;
+        xpNeeded = baseXpForNextLevel(currentLevel);
+
+        const unlockedItem = UNLOCKABLES.find(u => u.level === currentLevel);
+        if (unlockedItem) {
+            setTimeout(() => {
+                 toast({
+                    title: `✨ Unlocked: ${unlockedItem.name}!`,
+                    description: `You've reached level ${currentLevel} and unlocked a new cup.`,
+                });
+            }, 1000);
+        }
+    }
+    
+    if (leveledUp) {
         playSound('level-up');
         toast({
             title: `Level Up!`,
             description: `You've reached level ${currentLevel}!`,
         });
-        xpNeeded = baseXpForNextLevel(currentLevel);
     }
-    
+
     setXp(newXp);
     setLevel(currentLevel);
   }, [xp, level, toast, playSound]);
@@ -230,6 +261,11 @@ export function PomodoroTimer() {
   }, [timeRemaining, workDuration, restDuration, mode]);
   
   const xpProgress = useMemo(() => (xp / totalXpForNextLevel) * 100, [xp, totalXpForNextLevel]);
+
+  const currentCup = useMemo(() => {
+    const unlocked = UNLOCKABLES.filter(u => u.level <= level);
+    return unlocked[unlocked.length - 1];
+  }, [level]);
   
   const handleDurationChange = (type: 'work' | 'rest', operation: 'increment' | 'decrement') => {
     const setter = type === 'work' ? setTempWorkDuration : setTempRestDuration;
@@ -331,25 +367,29 @@ export function PomodoroTimer() {
         </div>
         
         <div className="relative w-48 h-48 sm:w-64 sm:h-64">
-           <CoffeeCup level={coffeeLevel} isHot={mode === 'work'} />
+           <CoffeeCup level={coffeeLevel} isHot={mode === 'work'} cupStyle={currentCup.style} />
         </div>
 
         
-        <p className="font-headline text-6xl sm:text-8xl font-bold tracking-tighter text-primary drop-shadow-sm flex items-center">
+        <p className="font-headline text-6xl sm:text-8xl font-bold tracking-tighter text-primary drop-shadow-sm flex items-center tabular-nums">
           <span>{minutes}</span>
-          <span className="relative tabular-nums">:</span>
+          <span className="relative bottom-[0.1em] mx-1">:</span>
           <span>{seconds}</span>
         </p>
         
         <div className="w-full px-8 space-y-2">
             <div className="flex justify-between items-center text-sm font-medium text-muted-foreground">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
+                    {currentCup.icon}
+                    <span>{currentCup.name}</span>
+                </div>
+                 <div className="flex items-center gap-1">
                     <Star className="w-4 h-4 text-accent" />
                     <span>Level {level}</span>
                 </div>
-                <span>{xp}/{totalXpForNextLevel} XP</span>
             </div>
             <Progress value={xpProgress} className="h-2"/>
+             <div className="text-right text-xs text-muted-foreground">{xp}/{totalXpForNextLevel} XP</div>
         </div>
       </CardContent>
 
@@ -378,5 +418,3 @@ export function PomodoroTimer() {
     </Card>
   );
 }
-
-    
