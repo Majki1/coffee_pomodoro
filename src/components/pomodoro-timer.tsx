@@ -15,6 +15,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "@/components/ui/carousel";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -49,10 +57,13 @@ import {
   Star,
   CupSoda,
   GlassWater,
-  Gift
+  Gift,
+  Lock
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "./theme-toggle";
+import { cn } from "@/lib/utils";
+
 
 type Mode = "work" | "rest";
 type Session = {
@@ -91,6 +102,8 @@ export function PomodoroTimer() {
   const [xp, setXp] = useState(0);
   const [level, setLevel] = useState(1);
   const [totalXpForNextLevel, setTotalXpForNextLevel] = useState(baseXpForNextLevel(1));
+  const [selectedCupIndex, setSelectedCupIndex] = useState(0);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
 
 
   const { toast } = useToast();
@@ -107,15 +120,23 @@ export function PomodoroTimer() {
       // Load from localStorage
       const savedXp = localStorage.getItem('pomodoro-xp');
       const savedLevel = localStorage.getItem('pomodoro-level');
-      if (savedXp) setXp(parseInt(savedXp, 10));
+      let currentLevel = 1;
       if (savedLevel) {
-          const savedLevelNum = parseInt(savedLevel, 10);
-          setLevel(savedLevelNum);
-          setTotalXpForNextLevel(baseXpForNextLevel(savedLevelNum));
+          currentLevel = parseInt(savedLevel, 10);
+          setLevel(currentLevel);
+          setTotalXpForNextLevel(baseXpForNextLevel(currentLevel));
       } else {
           setTotalXpForNextLevel(baseXpForNextLevel(1));
       }
+      if (savedXp) setXp(parseInt(savedXp, 10));
 
+      const savedCupIndex = localStorage.getItem('pomodoro-selected-cup');
+       if (savedCupIndex) {
+        const index = parseInt(savedCupIndex, 10);
+        if (UNLOCKABLES[index].level <= currentLevel) {
+          setSelectedCupIndex(index);
+        }
+      }
     }
   }, []);
   
@@ -125,6 +146,33 @@ export function PomodoroTimer() {
       localStorage.setItem('pomodoro-level', String(level));
     }
   }, [xp, level]);
+
+  useEffect(() => {
+    if (carouselApi) {
+      const unlockedIndex = UNLOCKABLES.filter(u => u.level <= level).length - 1;
+      const lastUnlockedCupIndex = Math.max(0, unlockedIndex);
+
+      const onSelect = () => {
+        const selected = carouselApi.selectedScrollSnap();
+        if (UNLOCKABLES[selected].level > level) {
+            toast({
+                title: "Cup Locked!",
+                description: `Reach level ${UNLOCKABLES[selected].level} to use the ${UNLOCKABLES[selected].name}.`,
+                variant: 'destructive',
+            });
+            setTimeout(() => carouselApi.scrollTo(selectedCupIndex, true), 100);
+        } else {
+            setSelectedCupIndex(selected);
+            localStorage.setItem('pomodoro-selected-cup', String(selected));
+        }
+      };
+      carouselApi.on("select", onSelect);
+      carouselApi.scrollTo(selectedCupIndex, true);
+      return () => {
+        carouselApi.off("select", onSelect);
+      };
+    }
+  }, [carouselApi, level, selectedCupIndex, toast]);
 
 
   const playSound = useCallback((sound: 'start' | 'end' | 'level-up') => {
@@ -263,9 +311,8 @@ export function PomodoroTimer() {
   const xpProgress = useMemo(() => (xp / totalXpForNextLevel) * 100, [xp, totalXpForNextLevel]);
 
   const currentCup = useMemo(() => {
-    const unlocked = UNLOCKABLES.filter(u => u.level <= level);
-    return unlocked[unlocked.length - 1];
-  }, [level]);
+    return UNLOCKABLES[selectedCupIndex];
+  }, [selectedCupIndex]);
   
   const handleDurationChange = (type: 'work' | 'rest', operation: 'increment' | 'decrement') => {
     const setter = type === 'work' ? setTempWorkDuration : setTempRestDuration;
@@ -366,9 +413,28 @@ export function PomodoroTimer() {
             <Button variant={mode === 'rest' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleModeChange('rest')} className="rounded-full">Rest</Button>
         </div>
         
-        <div className="relative w-48 h-48 sm:w-64 sm:h-64">
-           <CoffeeCup level={coffeeLevel} isHot={mode === 'work'} cupStyle={currentCup.style} />
-        </div>
+        <Carousel setApi={setCarouselApi} className="w-full max-w-xs">
+          <CarouselContent>
+            {UNLOCKABLES.map((cup, index) => (
+              <CarouselItem key={index}>
+                  <div className={cn(
+                    "relative flex items-center justify-center w-48 h-48 sm:w-64 sm:h-64 mx-auto transition-opacity",
+                    level < cup.level && "opacity-50"
+                  )}>
+                    <CoffeeCup level={coffeeLevel} isHot={mode === 'work'} cupStyle={cup.style} />
+                    {level < cup.level && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 rounded-full">
+                        <Lock className="h-10 w-10 text-foreground" />
+                        <span className="text-sm font-bold text-foreground mt-2">Lvl {cup.level}</span>
+                      </div>
+                    )}
+                  </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
 
         
         <p className="font-headline text-6xl sm:text-8xl font-bold tracking-tighter text-primary drop-shadow-sm flex items-center tabular-nums">
@@ -418,3 +484,5 @@ export function PomodoroTimer() {
     </Card>
   );
 }
+
+    
