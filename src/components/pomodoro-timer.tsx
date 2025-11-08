@@ -35,6 +35,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 import {
   Settings,
   History,
@@ -46,6 +47,7 @@ import {
   Plus,
   Minus,
   Coffee,
+  Star,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "./theme-toggle";
@@ -63,6 +65,9 @@ const formatTime = (seconds: number) => {
   return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 };
 
+const XP_PER_MINUTE = 10;
+const baseXpForNextLevel = (level: number) => Math.floor(100 * Math.pow(level, 1.5));
+
 export function PomodoroTimer() {
   const [workDuration, setWorkDuration] = useState(25);
   const [restDuration, setRestDuration] = useState(5);
@@ -72,9 +77,12 @@ export function PomodoroTimer() {
   const [timeRemaining, setTimeRemaining] = useState(workDuration * 60);
   const [isActive, setIsActive] = useState(false);
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [quote, setQuote] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [xp, setXp] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [totalXpForNextLevel, setTotalXpForNextLevel] = useState(baseXpForNextLevel(1));
+
 
   const { toast } = useToast();
   
@@ -86,10 +94,25 @@ export function PomodoroTimer() {
     if (typeof window !== "undefined") {
       endSound.current = new Tone.Synth({ oscillator: { type: "sine" } }).toDestination();
       startSound.current = new Tone.MembraneSynth({octaves: 10, pitchDecay: 0.1}).toDestination();
+      
+      // Load from localStorage
+      const savedXp = localStorage.getItem('pomodoro-xp');
+      const savedLevel = localStorage.getItem('pomodoro-level');
+      if (savedXp) setXp(parseInt(savedXp, 10));
+      if (savedLevel) setLevel(parseInt(savedLevel, 10));
+
     }
   }, []);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pomodoro-xp', String(xp));
+      localStorage.setItem('pomodoro-level', String(level));
+    }
+  }, [xp, level]);
 
-  const playSound = useCallback((sound: 'start' | 'end') => {
+
+  const playSound = useCallback((sound: 'start' | 'end' | 'level-up') => {
     if (isMuted) return;
     try {
       Tone.start();
@@ -97,26 +120,37 @@ export function PomodoroTimer() {
         startSound.current.triggerAttackRelease("C2", "8n");
       } else if (sound === 'end' && endSound.current) {
         endSound.current.triggerAttackRelease("C5", "0.5s");
+      } else if (sound === 'level-up' && endSound.current) {
+        const now = Tone.now();
+        endSound.current.triggerAttackRelease("C5", "0.2s", now);
+        endSound.current.triggerAttackRelease("E5", "0.2s", now + 0.2);
+        endSound.current.triggerAttackRelease("G5", "0.2s", now + 0.4);
       }
     } catch (error) {
       console.error("Failed to play sound", error);
     }
   }, [isMuted]);
+  
+  const addXp = useCallback((amount: number) => {
+    let newXp = xp + amount;
+    let currentLevel = level;
+    let xpNeeded = baseXpForNextLevel(currentLevel);
 
-  const fetchQuote = useCallback(async () => {
-    setQuote("Brewing some inspiration...");
-    try {
-      const result = await getInspirationalQuote({});
-      setQuote(result.quote);
-    } catch (error) {
-      setQuote("Could not fetch inspiration. Just relax!");
-      toast({
-        variant: "destructive",
-        title: "AI Error",
-        description: "Failed to fetch an inspirational quote.",
-      });
+    while (newXp >= xpNeeded) {
+        newXp -= xpNeeded;
+        currentLevel += 1;
+        playSound('level-up');
+        toast({
+            title: `Level Up!`,
+            description: `You've reached level ${currentLevel}!`,
+        });
+        xpNeeded = baseXpForNextLevel(currentLevel);
     }
-  }, [toast]);
+    
+    setXp(newXp);
+    setLevel(currentLevel);
+  }, [xp, level, toast, playSound]);
+
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -130,22 +164,26 @@ export function PomodoroTimer() {
       const newMode: Mode = mode === "work" ? "rest" : "work";
       if (mode === "work") {
         setSessions(prev => [...prev, { id: Date.now(), completedAt: new Date(), duration: workDuration }]);
+        addXp(workDuration * XP_PER_MINUTE);
       }
       setMode(newMode);
-      setIsActive(true);
+      setIsActive(true); // Automatically start the next session
       if (newMode === "rest") {
         setTimeRemaining(restDuration * 60);
-        // fetchQuote();
       } else {
         setTimeRemaining(workDuration * 60);
-        setQuote(null);
       }
     }
 
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isActive, timeRemaining, mode, workDuration, restDuration, playSound, fetchQuote]);
+  }, [isActive, timeRemaining, mode, workDuration, restDuration, playSound, addXp]);
+  
+  useEffect(() => {
+    setTotalXpForNextLevel(baseXpForNextLevel(level));
+  }, [level]);
+
 
   const handleToggle = () => {
     if (timeRemaining === 0) {
@@ -161,15 +199,26 @@ export function PomodoroTimer() {
     setIsActive(false);
     setMode("work");
     setTimeRemaining(workDuration * 60);
-    setQuote(null);
   };
+  
+  const handleModeChange = (newMode: Mode) => {
+    if (isActive) {
+        toast({
+            title: "Cannot switch mode while timer is active",
+            variant: "destructive"
+        });
+        return;
+    }
+    setMode(newMode);
+    setTimeRemaining(newMode === 'work' ? workDuration * 60 : restDuration * 60);
+  }
 
   const handleSaveSettings = () => {
     setWorkDuration(tempWorkDuration);
     setRestDuration(tempRestDuration);
     if (!isActive) {
-      setTimeRemaining(tempWorkDuration * 60);
-      setMode('work');
+      if(mode === 'work') setTimeRemaining(tempWorkDuration * 60);
+      if(mode === 'rest') setTimeRemaining(tempRestDuration * 60);
     }
     setIsSettingsOpen(false);
   };
@@ -180,6 +229,8 @@ export function PomodoroTimer() {
     const progress = (timeRemaining / totalDuration) * 100;
     return mode === "work" ? progress : 100 - progress;
   }, [timeRemaining, workDuration, restDuration, mode]);
+  
+  const xpProgress = useMemo(() => (xp / totalXpForNextLevel) * 100, [xp, totalXpForNextLevel]);
   
   const handleDurationChange = (type: 'work' | 'rest', operation: 'increment' | 'decrement') => {
     const setter = type === 'work' ? setTempWorkDuration : setTempRestDuration;
@@ -196,9 +247,9 @@ export function PomodoroTimer() {
 
   return (
     <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm">
-      <CardHeader className="flex flex-row items-center justify-between space-x-2">
+      <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex-1"></div>
-        <CardTitle className="flex-1 text-center font-headline text-3xl sm:text-4xl tracking-tight">
+        <CardTitle className="text-center font-headline text-3xl sm:text-4xl tracking-tight">
           Coffee Time
         </CardTitle>
         <div className="flex-1 flex items-center justify-end gap-1">
@@ -276,19 +327,30 @@ export function PomodoroTimer() {
 
       <CardContent className="flex flex-col items-center justify-center gap-6">
         <div className="flex items-center justify-center gap-2 mb-4">
-            <Button variant={mode === 'work' ? 'secondary' : 'ghost'} size="sm" onClick={() => setMode('work')} className="rounded-full">Work</Button>
-            <Button variant={mode === 'rest' ? 'secondary' : 'ghost'} size="sm" onClick={() => setMode('rest')} className="rounded-full">Rest</Button>
+            <Button variant={mode === 'work' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleModeChange('work')} className="rounded-full">Work</Button>
+            <Button variant={mode === 'rest' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleModeChange('rest')} className="rounded-full">Rest</Button>
+        </div>
+        
+        <div className="relative w-48 h-48 sm:w-64 sm:h-64">
+           <CoffeeCup level={coffeeLevel} isHot={mode === 'work'} />
         </div>
 
-        <CoffeeCup level={coffeeLevel} isHot={mode === 'work'} />
         
         <p className="font-headline text-6xl sm:text-8xl font-bold tracking-tighter text-primary drop-shadow-sm flex items-center">
           <span>{minutes}</span>
-          <span className="relative -top-1 sm:-top-2 mx-1 sm:mx-2">:</span>
+          <span className="relative -top-1 sm:-top-2 mx-1 sm:mx-2 tabular-nums">:</span>
           <span>{seconds}</span>
         </p>
         
-        <div className="h-10 text-center">
+        <div className="w-full px-8 space-y-2">
+            <div className="flex justify-between items-center text-sm font-medium text-muted-foreground">
+                <div className="flex items-center gap-1">
+                    <Star className="w-4 h-4 text-accent" />
+                    <span>Level {level}</span>
+                </div>
+                <span>{xp}/{totalXpForNextLevel} XP</span>
+            </div>
+            <Progress value={xpProgress} className="h-2"/>
         </div>
       </CardContent>
 
@@ -317,7 +379,5 @@ export function PomodoroTimer() {
     </Card>
   );
 }
-
-    
 
     

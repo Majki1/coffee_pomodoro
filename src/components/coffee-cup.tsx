@@ -47,7 +47,7 @@ export function CoffeeCup({ level, isHot }: CoffeeCupProps) {
         />
         {/* Handle */}
         <path
-          d="M110,40 C135,45 135,75 110,80"
+          d="M112,40 C135,45 135,75 118,80"
           strokeWidth="6"
           fill="transparent"
           className="stroke-foreground/80"
@@ -57,19 +57,19 @@ export function CoffeeCup({ level, isHot }: CoffeeCupProps) {
         {isHot && (
           <g className="stroke-foreground/30" strokeWidth="2">
             <path
-              d="M 60 15 Q 65 5 70 15 T 80 15"
+              d="M 50 18 Q 55 8 60 18 T 70 18"
               className="animate-steam"
               style={{ animationDelay: "0s" }}
             />
             <path
-              d="M 75 18 Q 80 8 85 18 T 95 18"
+              d="M 65 20 Q 70 10 75 20 T 85 20"
               className="animate-steam"
-              style={{ animationDelay: "0.5s" }}
+              style={{ animationDelay: "0.7s" }}
             />
             <path
-              d="M 90 15 Q 95 5 100 15 T 110 15"
+              d="M 80 18 Q 85 8 90 18 T 100 18"
               className="animate-steam"
-              style={{ animationDelay: "1s" }}
+              style={{ animationDelay: "1.4s" }}
             />
           </g>
         )}
@@ -77,23 +77,23 @@ export function CoffeeCup({ level, isHot }: CoffeeCupProps) {
       <style jsx>{`
         @keyframes steam {
           0% {
-            transform: translateY(0) scale(0.5);
+            transform: translateY(0) scale(0.8);
             opacity: 0;
           }
           20% {
             opacity: 0.7;
           }
           80% {
-            transform: translateY(-20px) scale(1);
+            transform: translateY(-20px) scale(1.2);
             opacity: 0.2;
           }
           100% {
-            transform: translateY(-25px) scale(1.2);
+            transform: translateY(-25px) scale(1.4);
             opacity: 0;
           }
         }
         .animate-steam {
-          animation: steam 2s infinite linear;
+          animation: steam 2.1s infinite linear;
           opacity: 0;
         }
       `}</style>
