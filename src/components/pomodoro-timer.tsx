@@ -4,7 +4,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import * as Tone from "tone";
 import { format, formatDistanceToNow } from "date-fns";
-import { getInspirationalQuote } from "@/ai/flows/inspirational-rest-quotes";
 
 import { CoffeeCup } from "@/components/coffee-cup";
 import { Button } from "@/components/ui/button";
@@ -338,7 +337,7 @@ export function PomodoroTimer() {
         
         <p className="font-headline text-6xl sm:text-8xl font-bold tracking-tighter text-primary drop-shadow-sm flex items-center">
           <span>{minutes}</span>
-          <span className="relative -top-1 sm:-top-2 mx-1 sm:mx-2 tabular-nums">:</span>
+          <span className="relative tabular-nums">:</span>
           <span>{seconds}</span>
         </p>
         
