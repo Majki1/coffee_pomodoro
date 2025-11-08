@@ -4,7 +4,7 @@
 import { cn } from "@/lib/utils";
 import React from "react";
 
-export type CupStyle = "mug" | "glass" | "takeaway" | "fancy";
+export type CupStyle = "mug" | "glass" | "takeaway";
 
 interface CoffeeCupProps {
   level: number; // 0-100
@@ -20,18 +20,13 @@ const cupPaths: Record<CupStyle, { cup: string; handle?: string; steam?: boolean
   },
   glass: {
     cup: "M30,110 L110,110 L120,15 L20,15 Z",
-    handle: "M112,40 C130,45 130,75 118,80",
+    handle: "M117,40 C130,45 130,75 112,80",
     steam: false,
   },
   takeaway: {
     cup: "M35,110 L105,110 L120,15 L20,15 Z",
     steam: true,
   },
-  fancy: {
-    cup: "M30,90 C 30,105 110,105 110,90 C 110,75 30,75 30,90 M 50,110 L90,110",
-    handle: "M105,70 C125,70 125,90 105,90",
-    steam: true,
-  }
 };
 
 
@@ -43,6 +38,16 @@ export function CoffeeCup({ level, isHot, cupStyle }: CoffeeCupProps) {
     if (cupStyle !== 'takeaway') return null;
     return (
        <g>
+          {/* Straw */}
+          {!isHot && (
+            <path
+              d="M80,-15 L90,15"
+              strokeWidth="5"
+              className="stroke-accent"
+              fill="transparent"
+              strokeLinecap="round"
+            />
+          )}
           <path d="M15,15 L125,15" strokeWidth="6" className="stroke-foreground/80" fill="transparent"/>
           <path d="M50,10 C50,0 90,0 90,10" strokeWidth="4" className="stroke-foreground/60" fill="transparent"/>
         </g>

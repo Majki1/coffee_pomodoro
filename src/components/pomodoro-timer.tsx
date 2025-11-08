@@ -76,7 +76,6 @@ const UNLOCKABLES: { level: number; name: string; style: CupStyle, icon: React.R
     { level: 1, name: "Classic Mug", style: "mug", icon: <Coffee className="h-5 w-5" /> },
     { level: 5, name: "Iced Coffee Glass", style: "glass", icon: <GlassWater className="h-5 w-5" /> },
     { level: 10, name: "Takeaway Cup", style: "takeaway", icon: <CupSoda className="h-5 w-5" /> },
-    { level: 15, name: "Fancy Teacup", style: "fancy", icon: <Gift className="h-5 w-5" /> },
 ];
 
 const formatTime = (seconds: number) => {
