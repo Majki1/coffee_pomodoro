@@ -12,32 +12,28 @@ interface CoffeeCupProps {
   cupStyle: CupStyle;
 }
 
-const cupPaths: Record<CupStyle, { cup: string; handle?: string; liquidClip: string; liquidFill: string; steam?: boolean }> = {
+const cupPaths: Record<CupStyle, { cup: string; handle?: string; liquidClip: string; steam?: boolean }> = {
   mug: {
     cup: "M20,100 C20,100 20,110 30,110 L110,110 C120,110 120,100 120,100 L110,20 L30,20 Z",
     handle: "M112,40 C135,45 135,75 118,80",
-    liquidClip: "M20,100 C20,100 20,110 30,110 L110,110 C120,110 120,100 120,100 L110,20 L30,20 Z",
-    liquidFill: "M20,15 L120,15 L120,110 L20,110 Z",
+    liquidClip: "M30,20 L110,20 L120,100 C120,100 120,110 110,110 L30,110 C20,110 20,100 20,100 Z",
     steam: true,
   },
   glass: {
     cup: "M30,110 L110,110 L120,15 L20,15 Z",
     handle: "M112,40 C130,45 130,75 118,80",
-    liquidClip: "M30,110 L110,110 L120,15 L20,15 Z",
-    liquidFill: "M20,15 L120,15 L120,110 L20,110 Z",
+    liquidClip: "M20,15 L120,15 L110,110 L30,110 Z",
     steam: false,
   },
   takeaway: {
     cup: "M35,110 L105,110 L120,15 L20,15 Z",
-    liquidClip: "M35,110 L105,110 L120,15 L20,15 Z",
-    liquidFill: "M20,15 L120,15 L120,110 L20,110 Z",
+    liquidClip: "M20,15 L120,15 L105,110 L35,110 Z",
     steam: true,
   },
   fancy: {
     cup: "M30,90 C 30,105 110,105 110,90 C 110,75 30,75 30,90 M 50,110 L90,110",
     handle: "M105,70 C125,70 125,90 105,90",
     liquidClip: "M30,90 C 30,105 110,105 110,90 C 110,75 30,75 30,90",
-    liquidFill: "M30,75 L110,75 L110,90 L30,90 Z",
     steam: true,
   }
 };
@@ -75,14 +71,36 @@ export function CoffeeCup({ level, isHot, cupStyle }: CoffeeCupProps) {
 
         {/* Coffee Liquid */}
         <g clipPath="url(#cup-clip)">
-          <rect
-            x="20"
-            y={coffeeY + 15}
-            width="100"
-            height={coffeeHeight}
+          <path
+            d={currentCup.liquidClip}
             className="fill-primary transition-all duration-1000 ease-in-out"
+            transform={`translate(0, ${100 - (100 * level / 100)}) scale(1, ${level / 100})`}
+            style={{transformOrigin: 'bottom center'}}
           />
         </g>
+        
+        {/* Steam Animation */}
+        {isHot && currentCup.steam && (
+           <g transform="translate(0, -5)">
+            <g className="stroke-foreground/30" strokeWidth="2" fill="transparent">
+              <path
+                d="M 50 15 Q 55 5 60 15 T 70 15"
+                className="animate-steam"
+                style={{ animationDelay: "0s" }}
+              />
+              <path
+                d="M 65 17 Q 70 7 75 17 T 85 17"
+                className="animate-steam"
+                style={{ animationDelay: "0.7s" }}
+              />
+              <path
+                d="M 80 15 Q 85 5 90 15 T 100 15"
+                className="animate-steam"
+                style={{ animationDelay: "1.4s" }}
+              />
+            </g>
+          </g>
+        )}
 
         {/* Cup Outline */}
         <path
@@ -104,29 +122,6 @@ export function CoffeeCup({ level, isHot, cupStyle }: CoffeeCupProps) {
         {/* Lid for Takeaway */}
         {getLid()}
 
-
-        {/* Steam Animation */}
-        {isHot && currentCup.steam && (
-           <g transform="translate(0, 5)">
-            <g className="stroke-foreground/30" strokeWidth="2">
-              <path
-                d="M 50 10 Q 55 0 60 10 T 70 10"
-                className="animate-steam"
-                style={{ animationDelay: "0s" }}
-              />
-              <path
-                d="M 65 12 Q 70 2 75 12 T 85 12"
-                className="animate-steam"
-                style={{ animationDelay: "0.7s" }}
-              />
-              <path
-                d="M 80 10 Q 85 0 90 10 T 100 10"
-                className="animate-steam"
-                style={{ animationDelay: "1.4s" }}
-              />
-            </g>
-          </g>
-        )}
       </svg>
       <style jsx>{`
         @keyframes steam {
