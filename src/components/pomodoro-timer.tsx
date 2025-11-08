@@ -149,27 +149,36 @@ export function PomodoroTimer() {
 
   useEffect(() => {
     if (carouselApi) {
-      const unlockedIndex = UNLOCKABLES.filter(u => u.level <= level).length - 1;
-      const lastUnlockedCupIndex = Math.max(0, unlockedIndex);
-
       const onSelect = () => {
         const selected = carouselApi.selectedScrollSnap();
         if (UNLOCKABLES[selected].level > level) {
-            toast({
-                title: "Cup Locked!",
-                description: `Reach level ${UNLOCKABLES[selected].level} to use the ${UNLOCKABLES[selected].name}.`,
-                variant: 'destructive',
-            });
-            setTimeout(() => carouselApi.scrollTo(selectedCupIndex, true), 100);
+          // Allow viewing but don't set it as the selected cup
         } else {
-            setSelectedCupIndex(selected);
-            localStorage.setItem('pomodoro-selected-cup', String(selected));
+          setSelectedCupIndex(selected);
+          localStorage.setItem('pomodoro-selected-cup', String(selected));
         }
       };
+      
+      const onPointerUp = () => {
+        const selected = carouselApi.selectedScrollSnap();
+        if (UNLOCKABLES[selected].level > level) {
+          toast({
+              title: "Cup Locked!",
+              description: `Reach level ${UNLOCKABLES[selected].level} to use the ${UNLOCKABLES[selected].name}.`,
+              variant: 'destructive',
+          });
+          // Gently scroll back to the last valid cup
+          setTimeout(() => carouselApi.scrollTo(selectedCupIndex, true), 100);
+        }
+      }
+
       carouselApi.on("select", onSelect);
+      carouselApi.on("pointerUp", onPointerUp);
       carouselApi.scrollTo(selectedCupIndex, true);
+
       return () => {
         carouselApi.off("select", onSelect);
+        carouselApi.off("pointerUp", onPointerUp);
       };
     }
   }, [carouselApi, level, selectedCupIndex, toast]);
@@ -484,5 +493,7 @@ export function PomodoroTimer() {
     </Card>
   );
 }
+
+    
 
     
