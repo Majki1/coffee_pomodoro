@@ -19,6 +19,7 @@ export function CoffeeCup({ level, isHot }: CoffeeCupProps) {
         viewBox="0 0 150 150"
         className="w-full h-full"
         aria-hidden="true"
+        overflow="visible"
       >
         <defs>
           <clipPath id="cup-clip">

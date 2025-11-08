@@ -48,6 +48,7 @@ import {
   Coffee,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ThemeToggle } from "./theme-toggle";
 
 type Mode = "work" | "rest";
 type Session = {
@@ -106,7 +107,7 @@ export function PomodoroTimer() {
     setQuote("Brewing some inspiration...");
     try {
       const result = await getInspirationalQuote({});
-      setQuote(`"${result.quote}"`);
+      setQuote(result.quote);
     } catch (error) {
       setQuote("Could not fetch inspiration. Just relax!");
       toast({
@@ -198,6 +199,7 @@ export function PomodoroTimer() {
           Coffee Time
         </CardTitle>
         <div className="absolute top-4 right-4 flex items-center gap-2">
+            <ThemeToggle />
             <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
                 <DialogTrigger asChild>
                     <Button variant="ghost" size="icon" aria-label="Settings">
