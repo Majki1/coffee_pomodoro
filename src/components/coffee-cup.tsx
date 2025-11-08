@@ -57,7 +57,7 @@ export function CoffeeCup({ level, isHot }: CoffeeCupProps) {
         {isHot && (
           <g className="stroke-foreground/30" strokeWidth="2">
             <path
-              d="M 60 15 Q 65 5 70 15"
+              d="M 60 20 Q 65 10 70 20 T 80 20"
               style={{
                 animation: "steam 2s infinite linear",
                 animationDelay: "0s",
@@ -65,7 +65,7 @@ export function CoffeeCup({ level, isHot }: CoffeeCupProps) {
               }}
             />
             <path
-              d="M 75 18 Q 80 8 85 18"
+              d="M 75 23 Q 80 13 85 23 T 95 23"
               style={{
                 animation: "steam 2s infinite linear",
                 animationDelay: "0.5s",
@@ -73,7 +73,7 @@ export function CoffeeCup({ level, isHot }: CoffeeCupProps) {
               }}
             />
             <path
-              d="M 90 15 Q 95 5 100 15"
+              d="M 90 20 Q 95 10 100 20 T 110 20"
               style={{
                 animation: "steam 2s infinite linear",
                 animationDelay: "1s",
@@ -105,5 +105,3 @@ export function CoffeeCup({ level, isHot }: CoffeeCupProps) {
     </div>
   );
 }
-
-    
