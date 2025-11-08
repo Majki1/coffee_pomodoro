@@ -38,16 +38,14 @@ export function CoffeeCup({ level, isHot, cupStyle }: CoffeeCupProps) {
     if (cupStyle !== 'takeaway') return null;
     return (
        <g>
-          {/* Straw - only appears when drink is "cold" (rest mode) */}
-          {!isHot && (
+          {/* Straw */}
             <path
-              d="M80,18 L90,5"
+              d="M82,100 L100,5"
               strokeWidth="5"
               className="stroke-accent"
               fill="transparent"
               strokeLinecap="round"
             />
-          )}
           <path d="M15,15 L125,15" strokeWidth="6" className="stroke-foreground/80" fill="transparent"/>
         </g>
     )
