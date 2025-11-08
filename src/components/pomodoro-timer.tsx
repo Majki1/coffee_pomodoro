@@ -192,14 +192,16 @@ export function PomodoroTimer() {
     }
   }
 
+  const [minutes, seconds] = formatTime(timeRemaining).split(':');
+
   return (
     <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div className="w-1/4"></div>
-        <CardTitle className="w-1/2 text-center font-headline text-3xl sm:text-4xl tracking-tight">
+      <CardHeader className="flex flex-row items-center justify-between space-x-2">
+        <div className="flex-1"></div>
+        <CardTitle className="flex-1 text-center font-headline text-3xl sm:text-4xl tracking-tight">
           Coffee Time
         </CardTitle>
-        <div className="w-1/4 flex items-center justify-end gap-1">
+        <div className="flex-1 flex items-center justify-end gap-1">
             <ThemeToggle />
             <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
                 <DialogTrigger asChild>
@@ -280,16 +282,13 @@ export function PomodoroTimer() {
 
         <CoffeeCup level={coffeeLevel} isHot={mode === 'work'} />
         
-        <p className="font-headline text-6xl sm:text-8xl font-bold tracking-tighter text-primary drop-shadow-sm">
-          {formatTime(timeRemaining)}
+        <p className="font-headline text-6xl sm:text-8xl font-bold tracking-tighter text-primary drop-shadow-sm flex items-center">
+          <span>{minutes}</span>
+          <span className="relative -top-1 sm:-top-2 mx-1 sm:mx-2">:</span>
+          <span>{seconds}</span>
         </p>
         
         <div className="h-10 text-center">
-        {mode === 'rest' && quote && (
-          <p className="text-muted-foreground italic animate-in fade-in duration-500">
-            {quote}
-          </p>
-        )}
         </div>
       </CardContent>
 
@@ -318,5 +317,7 @@ export function PomodoroTimer() {
     </Card>
   );
 }
+
+    
 
     
