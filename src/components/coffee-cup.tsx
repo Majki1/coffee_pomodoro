@@ -12,38 +12,32 @@ interface CoffeeCupProps {
   cupStyle: CupStyle;
 }
 
-const cupPaths: Record<CupStyle, { cup: string; handle?: string; liquidClip: string; steam?: boolean }> = {
+const cupPaths: Record<CupStyle, { cup: string; handle?: string; steam?: boolean }> = {
   mug: {
     cup: "M20,100 C20,100 20,110 30,110 L110,110 C120,110 120,100 120,100 L110,20 L30,20 Z",
     handle: "M112,40 C135,45 135,75 118,80",
-    liquidClip: "M30,20 L110,20 L120,100 C120,100 120,110 110,110 L30,110 C20,110 20,100 20,100 Z",
     steam: true,
   },
   glass: {
     cup: "M30,110 L110,110 L120,15 L20,15 Z",
     handle: "M112,40 C130,45 130,75 118,80",
-    liquidClip: "M20,15 L120,15 L110,110 L30,110 Z",
     steam: false,
   },
   takeaway: {
     cup: "M35,110 L105,110 L120,15 L20,15 Z",
-    liquidClip: "M20,15 L120,15 L105,110 L35,110 Z",
     steam: true,
   },
   fancy: {
     cup: "M30,90 C 30,105 110,105 110,90 C 110,75 30,75 30,90 M 50,110 L90,110",
     handle: "M105,70 C125,70 125,90 105,90",
-    liquidClip: "M30,90 C 30,105 110,105 110,90 C 110,75 30,75 30,90",
     steam: true,
   }
 };
 
 
 export function CoffeeCup({ level, isHot, cupStyle }: CoffeeCupProps) {
-  const coffeeHeight = 85 * (level / 100);
-  const coffeeY = 100 - coffeeHeight;
-  
   const currentCup = cupPaths[cupStyle] || cupPaths.mug;
+  const liquidClipId = `cup-clip-${cupStyle}`;
 
   const getLid = () => {
     if (cupStyle !== 'takeaway') return null;
@@ -64,18 +58,22 @@ export function CoffeeCup({ level, isHot, cupStyle }: CoffeeCupProps) {
         overflow="visible"
       >
         <defs>
-          <clipPath id="cup-clip">
-            <path d={currentCup.liquidClip} />
+          <clipPath id={liquidClipId}>
+            <path d={currentCup.cup} />
           </clipPath>
         </defs>
 
         {/* Coffee Liquid */}
-        <g clipPath="url(#cup-clip)">
-          <path
-            d={currentCup.liquidClip}
-            className="fill-primary transition-all duration-1000 ease-in-out"
-            transform={`translate(0, ${100 - (100 * level / 100)}) scale(1, ${level / 100})`}
-            style={{transformOrigin: 'bottom center'}}
+        <g clipPath={`url(#${liquidClipId})`}>
+          <rect
+            x="0"
+            y="0"
+            width="150"
+            height="150"
+            className="fill-primary transition-transform duration-1000 ease-in-out"
+            style={{
+              transform: `translateY(${100 - level}%)`,
+            }}
           />
         </g>
         
