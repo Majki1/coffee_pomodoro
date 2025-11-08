@@ -41,7 +41,7 @@ export function CoffeeCup({ level, isHot, cupStyle }: CoffeeCupProps) {
           {/* Straw */}
           {!isHot && (
             <path
-              d="M80,-15 L90,15"
+              d="M80,15 L90,-5"
               strokeWidth="5"
               className="stroke-accent"
               fill="transparent"
@@ -49,7 +49,6 @@ export function CoffeeCup({ level, isHot, cupStyle }: CoffeeCupProps) {
             />
           )}
           <path d="M15,15 L125,15" strokeWidth="6" className="stroke-foreground/80" fill="transparent"/>
-          <path d="M50,10 C50,0 90,0 90,10" strokeWidth="4" className="stroke-foreground/60" fill="transparent"/>
         </g>
     )
   }
